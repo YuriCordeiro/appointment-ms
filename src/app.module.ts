@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
+import { AppController } from './controllers/app.controller';
 import { AppointmentController } from './controllers/appointment.controller';
 import { AgendaController } from './controllers/agenda.controller';
 import { AgendaUseCase } from './use-cases/agendas/agenda.use-case';
