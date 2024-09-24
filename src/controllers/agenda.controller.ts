@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Logger, NotImplementedException, Param, Post, Put, UseGuards } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { Roles } from "src/auth/decorator-roles";
 import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
 import { RolesGuard } from "src/auth/roles-guard";
 import { CreateAgendaDTO } from "src/dto/create-agenda.dto";
 import { AgendaUseCase } from "src/use-cases/agendas/agenda.use-case";
 
+@ApiBearerAuth()
 @ApiTags('Agendas')
 @Controller('Agenda')
 @UseGuards(JwtAuthGuard, RolesGuard)
