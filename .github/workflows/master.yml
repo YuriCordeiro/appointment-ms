@@ -1,0 +1,99 @@
+name: SonarCloud Analysis, Build application and deploy
+
+on:
+  # push:
+  #   branches:
+  #     - feature/hexagonal
+  #     - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  sonarQube:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18.16.1'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test -- --coverage
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=YuriCordeiro_appointment-ms
+            -Dsonar.organization=yuricordeiro
+            -Dsonar.sources=./src
+            -Dsonar.tests=./test
+            -Dsonar.test.inclusions="**/*.spec.ts"
+            -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.exclusions=src/main.ts,src/**/*.module.ts,src/core/abstracts/generic-repository.abstract.ts,src/frameworks/data-services/mongo/mongo-data-services.service.ts,src/frameworks/data-services/mongo/entities/product.model.ts,src/use-cases/product/product-factory.service.ts,src/controllers/app.controller.ts
+            
+  build:
+    name: "Build and Push Docker Image to Amazon ECR"
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: "us-east-1"
+
+    steps:    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@0e613a0980cbf65ed5b322eb7a1e075d28913a83
+      with:
+        aws-access-key-id: ${{ secrets.SQS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.SQS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Amazon ECR "Login" Action for GitHub Actions
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        # A comma-delimited list of AWS account IDs that are associated with the ECR Private registries. If you do not specify a registry, the default ECR Private registry is assumed. If 'public' is given as input to 'registry-type', this input is ignored.
+        registries: "975050002971"
+        # Which ECR registry type to log into. Options: [private, public]
+        registry-type: private
+        # Whether to skip explicit logout of the registries during post-job cleanup. Exists for backward compatibility on self-hosted runners. Not recommended. Options: ['true', 'false']      
+
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        REGISTRY_NAME: product-ms
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $REGISTRY_NAME:$IMAGE_TAG -t $REGISTRY_NAME:latest . --no-cache
+        docker tag $REGISTRY_NAME:latest $ECR_REGISTRY/$REGISTRY_NAME:$IMAGE_TAG >> $GITHUB_OUTPUT
+        docker tag $REGISTRY_NAME:latest $ECR_REGISTRY/$REGISTRY_NAME:latest >> $GITHUB_OUTPUT
+        docker push $ECR_REGISTRY/$REGISTRY_NAME --all-tags
+    - name: Update kube config
+      env:
+        EKS_CLUSTER_NAME: 'eks-cluser'
+      run: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region ${{ env.AWS_REGION }}
+
+    - name: Deploy to EKS
+      env:
+        MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+        MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+        MYSQL_DB: ${{ secrets.MYSQL_DB }}
+        MYSQL_USER: ${{ secrets.MYSQL_USER }}
+        MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  
+        
+      run: |
+        kubectl apply -f k8s/cloud/
+        kubectl set env deployment/product-ms MYSQL_HOST=$MYSQL_HOST MYSQL_PORT=$MYSQL_PORT MYSQL_DB=$MYSQL_DB MYSQL_USER=$MYSQL_USER MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_HOST=$MYSQL_HOST
