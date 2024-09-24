@@ -1,38 +1,42 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ConflictException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { IDataServices } from "src/core/abstracts/data-services.abstract";
 import { CreateAppointmentDTO } from "src/dto/create-appointment.dto";
 import { Appointment } from "src/frameworks/data-services/mysql/entities/appointment.model";
 import { AgendaUseCase } from "../agendas/agenda.use-case";
-import { Agenda } from "src/frameworks/data-services/mysql/entities/agenda.model";
+import { EmailService } from "src/email/email.service";
+import { IMedPort, IMedPortToken } from "src/frameworks/api-services/ports/med.port";
+import { DoctorResponseDTO } from "src/dto/doctor-response.dto";
 
 @Injectable()
 export class AppointmentUseCase {
 
     private readonly logger = new Logger(AppointmentUseCase.name);
 
-    constructor(private dataServices: IDataServices, private agendaUseCase: AgendaUseCase) { }
+    constructor(
+        private dataServices: IDataServices,
+        private agendaUseCase: AgendaUseCase,
+        private emailService: EmailService,
+        @Inject(IMedPortToken) private doctorMicrosserviceClient: IMedPort
+    ) { }
 
-    async createAppointment(appointmentDTO: CreateAppointmentDTO): Promise<Appointment> {
+    async createAppointment(appointmentDTO: CreateAppointmentDTO, patientName: string): Promise<Appointment> {
 
-        let doctorId = appointmentDTO.doctorId;
-        let appointmentStartDate = appointmentDTO.startDate;
-        let doctorAvailableAgendas = await this.agendaUseCase.doctorHasAvailbeAgenda(doctorId, appointmentStartDate);
-        let doctorHasAppointmentConflicts = await this.doctorHasAppointmentConflicts(doctorId, appointmentStartDate)
+        const doctorId = appointmentDTO.doctorId;
+        const appointmentStartDate = appointmentDTO.startDate;
+        const doctorAvailableAgendas = await this.agendaUseCase.doctorHasAvailbeAgenda(doctorId, appointmentStartDate);
+        const doctorHasAppointmentConflicts = await this.doctorHasAppointmentConflicts(doctorId, appointmentStartDate)
 
         if (doctorAvailableAgendas.length > 0) {
             if (!doctorHasAppointmentConflicts) {
-                let appointment: Appointment = new Appointment();
-                appointment.doctorId = appointmentDTO.doctorId;
-                appointment.patientId = appointmentDTO.patientId;
-                appointment.startDate = new Date(appointmentDTO.startDate);
-                appointment.endDate = this.addHours(1, new Date(appointmentDTO.startDate)); // Set end date to startDate + 1 hour
-                appointment.status = appointmentDTO.status;
+                let appointment: Appointment = this.mapNewAppointment(appointmentDTO);
 
                 this.logger.log(`Appointment start date: ${new Date(appointment.startDate)}`);
                 this.logger.log(`Appointment end date: ${appointment.endDate}`);
 
                 let createdAppointment = this.dataServices.appointments.create(appointment);
                 await this.agendaUseCase.bookDateAtDoctorAgenda(doctorId, appointment.startDate);
+
+                this.sendEmail(appointmentDTO, doctorId, patientName);
                 return createdAppointment;
             } else {
                 throw new ConflictException(`Doctor with ID: ${doctorId} has not agendas available at requested date: ${appointmentStartDate}. Please choose another date!`);
@@ -40,6 +44,47 @@ export class AppointmentUseCase {
         } else {
             throw new NotFoundException(`Doctor with ID: ${doctorId} has not agendas available at requested date: ${appointmentStartDate}`);
         }
+    }
+
+    private async sendEmail(appointment: CreateAppointmentDTO, doctorId: number, patientName: string) {
+        const utcDate = this.addHours(3, appointment.startDate); // Solve deserializing date problem
+        const formattedDate = utcDate.toLocaleDateString("pt-BR", {
+            year: 'numeric',
+            month: ('long'),
+            weekday: ('long'),
+            day: 'numeric',
+        });
+        const formattedTime = utcDate.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' });
+        const doctorInformation = await this.getDoctorInformationExternally(doctorId);
+        const doctorEmail = doctorInformation.email;
+        const doctorName = doctorInformation.name;
+        const emailSubject = "Agendamento de Consulta Realizado";
+        const emailBodyMessage =
+            `Olá, Dr. ${doctorName}! 
+
+        Você tem uma nova consulta marcada!
+        Paciente: ${patientName}.
+        Data e horário: ${formattedDate} às ${formattedTime} horas.`
+
+        this.emailService.sendEmail(doctorEmail, emailSubject, emailBodyMessage);
+    }
+
+    private async getDoctorInformationExternally(doctorId: number): Promise<DoctorResponseDTO> {
+        const response = await this.doctorMicrosserviceClient.getDoctorById(doctorId.toString());
+        const doctorInformation = response.data as DoctorResponseDTO;
+
+        return doctorInformation;
+    }
+
+    private mapNewAppointment(appointmentDTO: CreateAppointmentDTO) {
+        let appointment: Appointment = new Appointment();
+        appointment.doctorId = appointmentDTO.doctorId;
+        appointment.patientId = appointmentDTO.patientId;
+        appointment.startDate = new Date(appointmentDTO.startDate);
+        appointment.endDate = this.addHours(1, new Date(appointmentDTO.startDate)); // Set end date to startDate + 1 hour
+        appointment.status = appointmentDTO.status;
+
+        return appointment;
     }
 
     private async doctorHasAppointmentConflicts(doctorId: number, appointmentStartDate: Date): Promise<boolean> {

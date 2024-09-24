@@ -7,7 +7,7 @@ export class CreateAgendaDTO {
     @IsNumber()
     @IsNotEmpty()
     readonly doctorId: number;
-    @ApiProperty({ example: '2024-11-24 17:00:00' })
+    @ApiProperty({ example: '2024-11-24T15:00:00.000Z' })
     @IsDate()
     @IsNotEmpty()
     readonly date: Date;

@@ -20,7 +20,7 @@ export class AgendaUseCase {
         }
 
         let entity: Agenda = new Agenda();
-        entity.date = agendaDTO.date;
+        entity.date = receivedDate;
         entity.doctorId = agendaDTO.doctorId;
         entity.isAvailable = agendaDTO.isAvailable;
 

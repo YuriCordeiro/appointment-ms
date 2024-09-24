@@ -6,7 +6,7 @@ export class Agenda {
     id: number;
     @Column()
     doctorId: number;
-    @Column()
+    @Column({ type: Date })
     date: Date;
     @Column()
     isAvailable: boolean;

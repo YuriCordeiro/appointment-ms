@@ -11,9 +11,11 @@ async function bootstrap() {
     .setTitle('Order Manager API')
     .setDescription('This is the API from our FIAP Tech Challenge')
     .setVersion('1.0')
+    .addBearerAuth()
     //.addTag('Order-Manager')
     .build();
   const document = SwaggerModule.createDocument(app, config);
+
   SwaggerModule.setup('api', app, document);
 
   await app.listen(3000);

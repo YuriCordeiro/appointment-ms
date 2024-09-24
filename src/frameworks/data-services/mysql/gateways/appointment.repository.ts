@@ -1,6 +1,8 @@
+import { Injectable } from "@nestjs/common";
 import { Appointment } from "../entities/appointment.model";
 import { MySqlGenericRepository } from "../external/mysql-generic-repository";
 
+@Injectable()
 export class AppointmentRepositoryImpl extends MySqlGenericRepository<Appointment> {
 
     getByDoctorId(id: any): Promise<Appointment[]> {
