@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appointment-ms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: appointment-ms
+  template:
+    metadata:
+      labels:
+        app: appointment-ms
+    spec:
+      containers:
+      - name: appointment-ms
+        image: 975050002971.dkr.ecr.us-east-1.amazonaws.com/appointment-ms:latest
+        ports:
+        - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 15
+        resources:
+          requests:
+            cpu: 10m
+        imagePullPolicy: Always        
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-appointment-ms
+spec:
+  type: LoadBalancer
+  selector:
+    app: appointment-ms
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
