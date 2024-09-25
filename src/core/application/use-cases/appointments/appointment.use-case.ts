@@ -3,9 +3,9 @@ import { IDataServices } from "src/core/domain/repositories/data-services.abstra
 import { CreateAppointmentDTO } from "src/adapter/driver/dtos/create-appointment.dto";
 import { Appointment } from "src/core/domain/entities/appointment.model";
 import { AgendaUseCase } from "../agendas/agenda.use-case";
-import { EmailService } from "src/adapter/driver/email/email.service";
 import { IMedPort, IMedPortToken } from "src/adapter/driven/transport/ports/med.port";
 import { DoctorResponseDTO } from "src/adapter/driver/dtos/doctor-response.dto";
+import { EmailService } from "src/adapter/driven/email/email.service";
 
 @Injectable()
 export class AppointmentUseCase {

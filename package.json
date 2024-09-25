@@ -77,9 +77,25 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "src/**/*.{ts,tsx}",
+      "!src/main.ts",
+      "!src/**/*.module.ts",
+      "!src/adapter/driver/controllers/app.controller.ts",
+      "!src/adapter/driven/repositories/mysql-generic-repository.ts",
+      "!src/adapter/driven/repositories/mysql-data-services.service.ts",
+      "!src/core/domain/repositories/generic-repository.abstract.ts",
+      "!src/adapter/driver/auth/*.ts",
+      "!src/adapter/driver/dtos/*.ts"
     ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "coverageDirectory": "./coverage",
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text",
+      "lcov"
+    ],
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/src/$1"
+    }
   }
 }
