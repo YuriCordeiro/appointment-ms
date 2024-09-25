@@ -102,17 +102,18 @@ export class AppointmentUseCase {
     }
 
     addHours(hours: number, date: Date) {
+        const receivedDate = new Date(date);
         if (typeof hours !== 'number') {
             throw new Error('Invalid "hours" argument')
         }
-
-        if (!(date instanceof Date)) {
+        
+        if (!(receivedDate instanceof Date)) {
             throw new Error('Invalid "date" argument')
         }
-
-        date.setHours(date.getHours() + hours)
-
-        return date
+        
+        receivedDate.setHours(receivedDate.getHours() + hours);
+        
+        return receivedDate;
     }
 
     async getAll(): Promise<Appointment[]> {
