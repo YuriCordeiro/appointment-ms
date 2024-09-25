@@ -43,7 +43,7 @@ jobs:
             -Dsonar.tests=./test
             -Dsonar.test.inclusions="**/*.spec.ts"
             -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.exclusions=src/main.ts,src/**/*.module.ts,src/core/abstracts/generic-repository.abstract.ts,src/frameworks/data-services/mongo/mongo-data-services.service.ts,src/frameworks/data-services/mongo/entities/appointment.model.ts,src/use-cases/appointment/appointment-factory.service.ts,src/controllers/app.controller.ts
+            -Dsonar.exclusions=src/main.ts,src/*/.module.ts,src/adapter/driver/controllers/app.controller.ts,src/adapter/driven/repositories/mysql-generic-repository.ts,src/adapter/driven/repositories/mysql-data-services.service.ts,src/core/domain/repositories/generic-repository.abstract.ts,src/adapter/driver/auth/.ts,src/adapter/driver/dtos/.ts
             
   build:
     name: "Build and Push Docker Image to Amazon ECR"
@@ -82,7 +82,7 @@ jobs:
         docker push $ECR_REGISTRY/$REGISTRY_NAME --all-tags
     - name: Update kube config
       env:
-        EKS_CLUSTER_NAME: 'eks-cluser'
+        EKS_CLUSTER_NAME: 'eks-cluster'
       run: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region ${{ env.AWS_REGION }}
 
     # - name: Deploy to EKS
