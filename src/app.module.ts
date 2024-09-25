@@ -26,7 +26,7 @@ import { JwtService } from '@nestjs/jwt';
       password: process.env.DB_PASSWORD,
       entities: [Agenda, Appointment],
       database: process.env.DB_NAME,
-      synchronize: false,
+      synchronize: true,
       timezone: "-03:00",
       dateStrings: true
       // logging: true,
