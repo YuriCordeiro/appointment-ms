@@ -89,7 +89,7 @@ jobs:
       env:
         MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
         MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
-        MYSQL_DB: ${{ secrets.MYSQL_DB }}
+        MYSQL_DB: appointment
         MYSQL_USER: ${{ secrets.MYSQL_USER }}
         MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  
