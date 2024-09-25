@@ -85,15 +85,16 @@ jobs:
         EKS_CLUSTER_NAME: 'eks-cluster'
       run: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region ${{ env.AWS_REGION }}
 
-    # - name: Deploy to EKS
-    #   env:
-    #     MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
-    #     MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
-    #     MYSQL_DB: ${{ secrets.MYSQL_DB }}
-    #     MYSQL_USER: ${{ secrets.MYSQL_USER }}
-    #     MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  
+    - name: Deploy to EKS
+      env:
+        MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+        MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+        MYSQL_DB: ${{ secrets.MYSQL_DB }}
+        MYSQL_USER: ${{ secrets.MYSQL_USER }}
+        MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  
+        DB_NAME: appointment
         
-    #   run: |
-    #     kubectl apply -f k8s/cloud/
-    #     kubectl set env deployment/appointment-ms MYSQL_HOST=$MYSQL_HOST MYSQL_PORT=$MYSQL_PORT MYSQL_DB=$MYSQL_DB MYSQL_USER=$MYSQL_USER MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_HOST=$MYSQL_HOST
+      run: |
+        kubectl apply -f k8s/cloud/
+        kubectl set env deployment/appointment-ms MYSQL_HOST=$MYSQL_HOST MYSQL_PORT=$MYSQL_PORT MYSQL_DB=$MYSQL_DB MYSQL_USER=$MYSQL_USER MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_HOST=$MYSQL_HOST DB_NAME=$DB_NAME
