@@ -92,8 +92,9 @@ jobs:
         DB_NAME: appointment
         DB_USERNAME: ${{ secrets.MYSQL_USER }}
         DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  
+        REDIS_URL: ${{ secrets.REDIS_URL }}
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         
       run: |
         kubectl apply -f k8s/cloud/
-        kubectl set env deployment/appointment-ms DB_HOST=$DB_HOST DB_PORT=$DB_PORT DB_NAME=$DB_NAME DB_USERNAME=$DB_USERNAME DB_PASSWORD=$DB_PASSWORD
+        kubectl set env deployment/appointment-ms DB_HOST=$DB_HOST DB_PORT=$DB_PORT DB_NAME=$DB_NAME DB_USERNAME=$DB_USERNAME DB_PASSWORD=$DB_PASSWORD REDIS_URL=$REDIS_URL
