@@ -11,7 +11,7 @@ import { Timestamp } from "typeorm";
 
 @ApiBearerAuth()
 @ApiTags('Agendas')
-@Controller('Agenda')
+@Controller('agenda')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AgendaController {
 

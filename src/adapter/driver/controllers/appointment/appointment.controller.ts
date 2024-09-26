@@ -12,7 +12,7 @@ import { Timestamp } from "typeorm";
 
 @ApiBearerAuth()
 @ApiTags('Appointments')
-@Controller('Appointment')
+@Controller('appointment')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AppointmentController {
 
