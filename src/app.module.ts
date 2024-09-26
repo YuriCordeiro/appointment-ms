@@ -19,13 +19,13 @@ import { MurLockModule } from 'murlock';
 
 @Module({
   imports: [
-    MurLockModule.forRoot({
-      wait: 100,
-      maxAttempts: 6,
-      logLevel: 'debug',
-      ignoreUnlockFail: true, 
-      redisOptions: { url: `redis://${process.env.REDIS_URL}` }
-    }),
+    // MurLockModule.forRoot({
+    //   wait: 100,
+    //   maxAttempts: 6,
+    //   logLevel: 'debug',
+    //   ignoreUnlockFail: true, 
+    //   redisOptions: { url: `redis://${process.env.REDIS_URL}` }
+    // }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,
