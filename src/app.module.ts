@@ -24,7 +24,11 @@ import { MurLockModule } from 'murlock';
       maxAttempts: 6,
       logLevel: 'debug',
       ignoreUnlockFail: true,
-      redisOptions: { url: 'rediss://redis-cluster.jmqgpb.cfg.use1.cache.amazonaws.com:11211' }
+      redisOptions: {
+        host: 'redis-serverless-jmqgpb.serverless.use1.cache.amazonaws.com',
+        port: 6379, 
+        tls: {}
+      }
     }),
     TypeOrmModule.forRoot({
       type: 'mysql',
