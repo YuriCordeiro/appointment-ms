@@ -25,9 +25,7 @@ import { MurLockModule } from 'murlock';
       logLevel: 'debug',
       ignoreUnlockFail: true,
       redisOptions: {
-        host: 'redis-serverless-jmqgpb.serverless.use1.cache.amazonaws.com',
-        port: 6379, 
-        tls: {}
+        url: 'rediss://redis-serverless-jmqgpb.serverless.use1.cache.amazonaws.com:6379'
       }
     }),
     TypeOrmModule.forRoot({
