@@ -20,7 +20,7 @@ export class AppointmentUseCase {
         @Inject(IMedPortToken) private doctorMicrosserviceClient: IMedPort
     ) { }
 
-    // @MurLock(100, 'appointmentDTO.doctorId')
+    @MurLock(100, 'appointmentDTO.doctorId')
     async createAppointment(appointmentDTO: CreateAppointmentDTO, patientName: string): Promise<Appointment> {
 
         const doctorId = appointmentDTO.doctorId;
