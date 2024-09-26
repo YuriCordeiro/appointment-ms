@@ -22,5 +22,4 @@ export class AppointmentRepositoryImpl extends MySqlGenericRepository<Appointmen
                 }
             });
     }
-
 }

@@ -15,9 +15,17 @@ import { MedAdapter } from './adapter/driven/transport/adapters/med.adapter';
 import { HttpModule } from '@nestjs/axios';
 import { JWTUtil } from './adapter/driver/auth/jtw-util';
 import { JwtService } from '@nestjs/jwt';
+import { MurLockModule } from 'murlock';
 
 @Module({
   imports: [
+    MurLockModule.forRoot({
+      wait: 100,
+      maxAttempts: 6,
+      logLevel: 'debug',
+      ignoreUnlockFail: true, 
+      redisOptions: { url: `redis://${process.env.REDIS_URL}` }
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,

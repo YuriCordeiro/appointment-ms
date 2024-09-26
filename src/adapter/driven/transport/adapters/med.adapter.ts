@@ -16,21 +16,21 @@ export class MedAdapter implements IMedPort {
             headers: { 'Content-Type': 'application/json' },
             proxy: false
         })
-        .then((response) => {
-            Logger.log(`Response from ${externalURL}`);
-            Logger.log(response.data);
-            return response;
-        })
-        .catch((error) => {
-            Logger.error(`Error from ${externalURL}`);
-            if (error.response) {
-                Logger.error(`Error status: ${error.response.status}`);
-                Logger.error(`Error data: ${JSON.stringify(error.response.data)}`);
-            } else {
-                Logger.error(`Error message: ${error.message}`);
-            }
-            return null;
-        });        
+            .then((response) => {
+                Logger.log(`Response from ${externalURL}`);
+                Logger.log(response.data);
+                return response;
+            })
+            .catch((error) => {
+                Logger.error(`Error from ${externalURL}`);
+                if (error.response) {
+                    Logger.error(`Error status: ${error.response.status}`);
+                    Logger.error(`Error data: ${JSON.stringify(error.response.data)}`);
+                } else {
+                    Logger.error(`Error message: ${error.message}`);
+                }
+                return null;
+            });
     }
 
 }

@@ -26,7 +26,6 @@ export class AgendaController {
     }
 
     @Get()
-    @Roles('doctor')
     getAllAgendas() {
         this.logger.log(`getAllAgendas() - Start`);
         return this.agendaUseCase.getAllAgendas();

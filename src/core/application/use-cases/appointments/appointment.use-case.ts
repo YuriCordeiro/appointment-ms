@@ -6,6 +6,7 @@ import { AgendaUseCase } from "../agendas/agenda.use-case";
 import { IMedPort, IMedPortToken } from "src/adapter/driven/transport/ports/med.port";
 import { DoctorResponseDTO } from "src/adapter/driver/dtos/doctor-response.dto";
 import { EmailService } from "src/adapter/driven/email/email.service";
+import { MurLock } from "murlock";
 
 @Injectable()
 export class AppointmentUseCase {
@@ -19,12 +20,13 @@ export class AppointmentUseCase {
         @Inject(IMedPortToken) private doctorMicrosserviceClient: IMedPort
     ) { }
 
+    @MurLock(100, 'appointmentDTO.doctorId')
     async createAppointment(appointmentDTO: CreateAppointmentDTO, patientName: string): Promise<Appointment> {
 
         const doctorId = appointmentDTO.doctorId;
         const appointmentStartDate = appointmentDTO.startDate;
         const doctorAvailableAgendas = await this.agendaUseCase.doctorHasAvailbeAgenda(doctorId, appointmentStartDate);
-        const doctorHasAppointmentConflicts = await this.doctorHasAppointmentConflicts(doctorId, appointmentStartDate)
+        const doctorHasAppointmentConflicts = await this.doctorHasAppointmentConflicts(doctorId, appointmentStartDate);
 
         if (doctorAvailableAgendas.length > 0) {
             if (!doctorHasAppointmentConflicts) {
@@ -106,13 +108,13 @@ export class AppointmentUseCase {
         if (typeof hours !== 'number') {
             throw new Error('Invalid "hours" argument')
         }
-        
+
         if (!(receivedDate instanceof Date)) {
             throw new Error('Invalid "date" argument')
         }
-        
+
         receivedDate.setHours(receivedDate.getHours() + hours);
-        
+
         return receivedDate;
     }
 
