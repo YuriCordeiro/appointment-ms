@@ -1,10 +1,13 @@
-import { Body, Controller, Delete, Get, Logger, NotImplementedException, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Logger, NotImplementedException, Param, Post, Put, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { Request } from "express";
 import { Roles } from "src/adapter/driver/auth/decorator-roles";
 import { JwtAuthGuard } from "src/adapter/driver/auth/jwt-auth.guard";
 import { RolesGuard } from "src/adapter/driver/auth/roles-guard";
 import { CreateAgendaDTO } from "src/adapter/driver/dtos/create-agenda.dto";
 import { AgendaUseCase } from "src/core/application/use-cases/agendas/agenda.use-case";
+import { JWTUtil } from "../../auth/jtw-util";
+import { Timestamp } from "typeorm";
 
 @ApiBearerAuth()
 @ApiTags('Agendas')
@@ -14,15 +17,18 @@ export class AgendaController {
 
     private readonly logger = new Logger(AgendaController.name);
 
-    constructor(private agendaUseCase: AgendaUseCase) {
+    constructor(private agendaUseCase: AgendaUseCase, private jwtUtil: JWTUtil) {
 
     }
 
     @Post()
     @Roles('doctor')
-    createNewAgenda(@Body() agenda: CreateAgendaDTO) {
+    createNewAgenda(@Req() request: Request, @Body() agenda: CreateAgendaDTO) {
         this.logger.log(`createNewAgenda(CreateAgendaDTO) - Start`);
-        return this.agendaUseCase.createAgenda(agenda);
+        const jwt = request.headers.authorization;
+        const json = this.jwtUtil.decode(jwt) as { sub: number, role: string, name: string, iat: Timestamp, exp: Timestamp };
+        const loggedDoctorId = json.sub;
+        return this.agendaUseCase.createAgenda(agenda, loggedDoctorId);
     }
 
     @Get()

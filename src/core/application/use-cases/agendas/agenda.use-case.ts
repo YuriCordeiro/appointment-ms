@@ -8,10 +8,9 @@ export class AgendaUseCase {
 
     constructor(private dataServices: IDataServices) { }
 
-    async createAgenda(agendaDTO: CreateAgendaDTO) {
-
+    async createAgenda(agendaDTO: CreateAgendaDTO, loggedDoctorId: number) {
         let receivedDate = new Date(agendaDTO.date);
-        let foundDoctorAgendas = await this.getAgendasByDoctorId(agendaDTO.doctorId);
+        let foundDoctorAgendas = await this.getAgendasByDoctorId(loggedDoctorId);
         if (foundDoctorAgendas != null) {
             let existentAgenda = foundDoctorAgendas.find(agenda => agenda.date.getDate() == receivedDate.getDate() && agenda.date.getHours() == receivedDate.getHours());
             if (existentAgenda != null) {
@@ -21,7 +20,7 @@ export class AgendaUseCase {
 
         let entity: Agenda = new Agenda();
         entity.date = receivedDate;
-        entity.doctorId = agendaDTO.doctorId;
+        entity.doctorId = loggedDoctorId;
         entity.isAvailable = agendaDTO.isAvailable;
 
         return this.dataServices.agendas.create(entity);
@@ -71,9 +70,6 @@ export class AgendaUseCase {
         if (foundAgenda != null) {
             if (agenda.date != null) {
                 foundAgenda.date = agenda.date;
-            }
-            if (agenda.doctorId != null) {
-                foundAgenda.doctorId = agenda.doctorId;
             }
             if (agenda.isAvailable != null) {
                 foundAgenda.isAvailable = agenda.isAvailable;
