@@ -25,7 +25,6 @@ export class AppointmentController {
     createNewAppointment(@Body() appointmentDTO: CreateAppointmentDTO, @Req() request: Request): Promise<Appointment> {
         this.logger.log('createNewAppointment(CreateAppointmentDTO) - Start.');
         const jwt = request.headers.authorization;
-        this.logger.log(`TOKEN: ${jwt}`);
         const json = this.jwtUtil.decode(jwt) as { sub: number, role: string, name: string, iat: Timestamp, exp: Timestamp };
         const patientName = json.name;
         return this.appointmentUseCase.createAppointment(appointmentDTO, patientName);

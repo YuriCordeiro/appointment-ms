@@ -49,6 +49,7 @@ export class AppointmentUseCase {
     }
 
     private async sendEmail(appointment: CreateAppointmentDTO, doctorId: number, patientName: string) {
+        this.logger.log(`sendEmail(CreateAppointmentDTO, number, string)`);
         const utcDate = this.addHours(3, appointment.startDate); // Solve deserializing date problem
         const formattedDate = utcDate.toLocaleDateString("pt-BR", {
             year: 'numeric',

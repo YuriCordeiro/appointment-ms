@@ -2,6 +2,9 @@ import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 import { Logger } from "@nestjs/common";
 
 export class EmailService {
+
+  private readonly logger = new Logger(EmailService.name);
+
   private sesClient: SESClient;
 
   constructor() {
@@ -25,9 +28,9 @@ export class EmailService {
     try {
       const command = new SendEmailCommand(params);
       const response = await this.sesClient.send(command);
-      Logger.log(`Email sent! Message ID: ${response.MessageId}`);
+      this.logger.log(`Email sent! Message ID: ${response.MessageId}`);
     } catch (error) {
-      Logger.error('Error sending email', error);
+      this.logger.error('Error sending email', error);
     }
   }
 }
