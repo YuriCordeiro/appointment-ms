@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Headers, Logger, NotImplementedException, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, Inject, Logger, NotImplementedException, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { Request } from "express";
 import { Roles } from "src/adapter/driver/auth/decorator-roles";
@@ -9,6 +9,7 @@ import { CreateAppointmentDTO } from "src/adapter/driver/dtos/create-appointment
 import { Appointment } from "src/core/domain/entities/appointment.model";
 import { AppointmentUseCase } from "src/core/application/use-cases/appointments/appointment.use-case";
 import { Timestamp } from "typeorm";
+import { IAppointmentUseCase } from "src/core/application/use-cases/appointments/appointment.use-case.interface";
 
 @ApiBearerAuth()
 @ApiTags('Appointments')
@@ -18,7 +19,7 @@ export class AppointmentController {
 
     private readonly logger = new Logger(AppointmentController.name);
 
-    constructor(private appointmentUseCase: AppointmentUseCase, private jwtUtil: JWTUtil) { }
+    constructor(@Inject('IAppointmentUseCase') private appointmentUseCase: IAppointmentUseCase, private jwtUtil: JWTUtil) { }
 
     @Post()
     @Roles('patient')

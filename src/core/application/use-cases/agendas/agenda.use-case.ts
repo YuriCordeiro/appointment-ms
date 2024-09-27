@@ -2,9 +2,10 @@ import { ConflictException, Injectable, NotFoundException } from "@nestjs/common
 import { IDataServices } from "src/core/domain/repositories/data-services.abstract";
 import { CreateAgendaDTO } from "src/adapter/driver/dtos/create-agenda.dto";
 import { Agenda } from "src/core/domain/entities/agenda.model";
+import { IAgendaUseCase } from "./agenda.use-case .interface";
 
 @Injectable()
-export class AgendaUseCase {
+export class AgendaUseCase implements IAgendaUseCase {
 
     constructor(private dataServices: IDataServices) { }
 

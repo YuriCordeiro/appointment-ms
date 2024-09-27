@@ -47,6 +47,20 @@ import { MurLockModule } from 'murlock';
     EmailModule
   ],
   controllers: [AppController, AppointmentController, AgendaController],
-  providers: [AppController, AppointmentUseCase, AgendaUseCase, { provide: IMedPortToken, useClass: MedAdapter }, JWTUtil, JwtService],
+  providers: [
+    AppController, 
+    {
+      provide: 'IAppointmentUseCase',
+      useClass: AppointmentUseCase,
+    },
+    {
+      provide: 'IAgendaUseCase',
+      useClass: AgendaUseCase,
+    }, 
+    { provide: IMedPortToken, useClass: MedAdapter }, JWTUtil, JwtService],
+    exports: [
+      'IAppointmentUseCase',
+      'IAgendaUseCase',
+    ],
 })
 export class AppModule { }

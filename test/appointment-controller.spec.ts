@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppointmentController } from 'src/adapter/driver/controllers/appointment/appointment.controller';
-import { AppointmentUseCase } from 'src/core/application/use-cases/appointments/appointment.use-case';
 import { CreateAppointmentDTO } from 'src/adapter/driver/dtos/create-appointment.dto';
 import { Appointment } from 'src/core/domain/entities/appointment.model';
 import { JWTUtil } from 'src/adapter/driver/auth/jtw-util';
@@ -31,7 +30,7 @@ describe('AppointmentController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AppointmentController],
       providers: [
-        { provide: AppointmentUseCase, useFactory: mockAppointmentUseCase },
+        { provide: 'IAppointmentUseCase', useFactory: mockAppointmentUseCase },
         { provide: JWTUtil, useFactory: mockJwtUtil },
         JwtAuthGuard,
         RolesGuard,
@@ -40,7 +39,7 @@ describe('AppointmentController', () => {
     }).compile();
 
     appointmentController = module.get<AppointmentController>(AppointmentController);
-    appointmentUseCaseMock = module.get(AppointmentUseCase);
+    appointmentUseCaseMock = module.get('IAppointmentUseCase');
     jwtUtilMock = module.get(JWTUtil);
   });
 
@@ -73,7 +72,7 @@ describe('AppointmentController', () => {
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 3600,
       });
-      
+
       appointmentUseCaseMock.createAppointment.mockResolvedValue(createdAppointment);
 
       const result = await appointmentController.createNewAppointment(appointmentDTO, {

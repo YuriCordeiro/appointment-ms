@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AppointmentUseCase } from 'src/core/application/use-cases/appointments/appointment.use-case';
 import { IDataServices } from 'src/core/domain/repositories/data-services.abstract';
-import { AgendaUseCase } from 'src/core/application/use-cases/agendas/agenda.use-case';
 import { IMedPort, IMedPortToken } from 'src/adapter/driven/transport/ports/med.port';
 import { CreateAppointmentDTO } from 'src/adapter/driver/dtos/create-appointment.dto';
 import { Appointment } from 'src/core/domain/entities/appointment.model';
-import { NotFoundException, ConflictException } from '@nestjs/common';
-import { AppointmentUseCase } from 'src/core/application/use-cases/appointments/appointment.use-case';
 import { EmailService } from 'src/adapter/driven/email/email.service';
+import { NotFoundException, ConflictException } from '@nestjs/common';
+import { MurLockService } from 'murlock';
 
 const mockDataServices = () => ({
   appointments: {
@@ -35,10 +35,20 @@ const mockMedPort = () => ({
   getDoctorById: jest.fn().mockResolvedValue({
     data: {
       email: 'doctor@example.com',
-      name: 'Dr. John Doe'
-    }
+      name: 'Dr. John Doe',
+    },
   }),
 });
+
+const mockMurLockService = {
+  lock: jest.fn(),
+  unlock: jest.fn(),
+  runWithLock: jest.fn((key, options, callback) => callback()),
+  options: {
+    lockKeyPrefix: 'somePrefix',
+    ttl: 1000,
+  }
+};
 
 describe('AppointmentUseCase', () => {
   let appointmentUseCase: AppointmentUseCase;
@@ -46,23 +56,26 @@ describe('AppointmentUseCase', () => {
   let agendaUseCaseMock: ReturnType<typeof mockAgendaUseCase>;
   let emailServiceMock: ReturnType<typeof mockEmailService>;
   let medPortMock: ReturnType<typeof mockMedPort>;
+  let murLockServiceMock: typeof mockMurLockService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AppointmentUseCase,
         { provide: IDataServices, useValue: mockDataServices() },
-        { provide: AgendaUseCase, useValue: mockAgendaUseCase() },
+        { provide: 'IAgendaUseCase', useValue: mockAgendaUseCase() },
         { provide: EmailService, useValue: mockEmailService() },
         { provide: IMedPortToken, useValue: mockMedPort() },
+        { provide: MurLockService, useValue: mockMurLockService },
       ],
     }).compile();
-
+  
     appointmentUseCase = module.get<AppointmentUseCase>(AppointmentUseCase);
     dataServicesMock = module.get(IDataServices);
-    agendaUseCaseMock = module.get(AgendaUseCase);
+    agendaUseCaseMock = module.get('IAgendaUseCase');
     emailServiceMock = module.get(EmailService);
     medPortMock = module.get(IMedPortToken);
+    murLockServiceMock = module.get(MurLockService);
   });
 
   it('should be defined', () => {
@@ -92,7 +105,7 @@ describe('AppointmentUseCase', () => {
       agendaUseCaseMock.doctorHasAvailbeAgenda.mockResolvedValue(doctorAvailableAgendas);
       agendaUseCaseMock.bookDateAtDoctorAgenda.mockResolvedValue(null);
       dataServicesMock.appointments.create.mockResolvedValue(createdAppointment);
-      dataServicesMock.appointments.getByDoctorId.mockResolvedValue([]); // Retorna array vazio para evitar conflitos
+      dataServicesMock.appointments.getByDoctorId.mockResolvedValue([]);
       emailServiceMock.sendEmail.mockResolvedValue(null);
 
       const result = await appointmentUseCase.createAppointment(appointmentDTO, patientName);
@@ -156,6 +169,27 @@ describe('AppointmentUseCase', () => {
     });
   });
 
+  describe('getAppointmentById', () => {
+    it('should return the appointment with the specified ID', async () => {
+      const appointmentId = 1;
+      const appointment: Appointment = {
+        id: appointmentId,
+        doctorId: 1,
+        patientId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Scheduled',
+      } as Appointment;
+
+      dataServicesMock.appointments.get.mockResolvedValue(appointment);
+
+      const result = await appointmentUseCase.getAppointmentById(appointmentId);
+
+      expect(result).toEqual(appointment);
+      expect(dataServicesMock.appointments.get).toHaveBeenCalledWith(appointmentId);
+    });
+  });
+
   describe('updateAppointment', () => {
     it('should update and return the updated appointment', async () => {
       const appointmentId = 1;
@@ -195,7 +229,28 @@ describe('AppointmentUseCase', () => {
 
       dataServicesMock.appointments.get.mockResolvedValue(null);
 
-      await expect(appointmentUseCase.updateAppointment(appointmentId, appointmentDTO)).rejects.toThrow(NotFoundException);
+      try {
+        await appointmentUseCase.updateAppointment(appointmentId, appointmentDTO);
+        fail('Expected NotFoundException to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundException);
+        expect(error.message).toBe(`No appointment with ID: ${appointmentId} were found.`);
+      }
+    });
+  });
+
+  describe('deleteAppointment', () => {
+    it('should throw a NotFoundException if the appointment is not found', async () => {
+      const appointmentId = 999;
+      dataServicesMock.appointments.get.mockResolvedValue(null);
+
+      try {
+        await appointmentUseCase.deleteAppointment(appointmentId);
+        fail('Expected NotFoundException to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundException);
+        expect(error.message).toBe(`There is no appointment with ID: ${appointmentId} registered.`);
+      }
     });
   });
 });

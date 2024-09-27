@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Logger, NotImplementedException, Param, Post, Put, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Logger, NotImplementedException, Param, Post, Put, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { Request } from "express";
 import { Roles } from "src/adapter/driver/auth/decorator-roles";
@@ -8,6 +8,7 @@ import { CreateAgendaDTO } from "src/adapter/driver/dtos/create-agenda.dto";
 import { AgendaUseCase } from "src/core/application/use-cases/agendas/agenda.use-case";
 import { JWTUtil } from "../../auth/jtw-util";
 import { Timestamp } from "typeorm";
+import { IAgendaUseCase } from "src/core/application/use-cases/agendas/agenda.use-case .interface";
 
 @ApiBearerAuth()
 @ApiTags('Agendas')
@@ -17,7 +18,7 @@ export class AgendaController {
 
     private readonly logger = new Logger(AgendaController.name);
 
-    constructor(private agendaUseCase: AgendaUseCase, private jwtUtil: JWTUtil) {
+    constructor(@Inject("IAgendaUseCase") private agendaUseCase: IAgendaUseCase, private jwtUtil: JWTUtil) {
 
     }
 
