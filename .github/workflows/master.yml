@@ -1,10 +1,9 @@
 name: SonarCloud Analysis, Build application and deploy
 
 on:
-  # push:
-  #   branches:
-  #     - feature/hexagonal
-  #     - master
+  push:
+    branches:
+      - master
   pull_request:
     branches:
       - master
