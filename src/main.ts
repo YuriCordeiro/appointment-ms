@@ -8,7 +8,7 @@ async function bootstrap() {
   process.env.TZ = 'America/Sao_Paulo'
 
   const config = new DocumentBuilder()
-    .setTitle('Order Manager API')
+    .setTitle('Appointment API')
     .setDescription('This is the API from our FIAP Tech Challenge')
     .setVersion('1.0')
     .addBearerAuth()
