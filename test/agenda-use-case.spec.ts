@@ -39,7 +39,6 @@ describe('AgendaUseCase', () => {
   describe('createAgenda', () => {
     it('should create and return a new agenda', async () => {
       const agendaDTO: CreateAgendaDTO = {
-        doctorId: 1,
         date: new Date(),
         isAvailable: true,
       };
@@ -54,7 +53,7 @@ describe('AgendaUseCase', () => {
       dataServicesMock.agendas.getByDoctorId.mockResolvedValue([]);
       dataServicesMock.agendas.create.mockResolvedValue(createdAgenda);
 
-      const result = await agendaUseCase.createAgenda(agendaDTO);
+      const result = await agendaUseCase.createAgenda(agendaDTO, 1);
 
       expect(result).toEqual(createdAgenda);
       expect(dataServicesMock.agendas.create).toHaveBeenCalledWith(expect.any(Agenda));
@@ -62,7 +61,6 @@ describe('AgendaUseCase', () => {
 
     it('should throw a ConflictException if an agenda already exists at the same date and time', async () => {
       const agendaDTO: CreateAgendaDTO = {
-        doctorId: 1,
         date: new Date(),
         isAvailable: true,
       };
@@ -76,7 +74,7 @@ describe('AgendaUseCase', () => {
 
       dataServicesMock.agendas.getByDoctorId.mockResolvedValue([existingAgenda]);
 
-      await expect(agendaUseCase.createAgenda(agendaDTO)).rejects.toThrow(ConflictException);
+      await expect(agendaUseCase.createAgenda(agendaDTO, 1)).rejects.toThrow(ConflictException);
     });
   });
 
@@ -102,15 +100,15 @@ describe('AgendaUseCase', () => {
       const doctorId = 1;
 
       const availableAgenda: Agenda = {
-          id: 1,
-          doctorId: doctorId,
-          date: appointmentDate,
-          isAvailable: true,
+        id: 1,
+        doctorId: doctorId,
+        date: appointmentDate,
+        isAvailable: true,
       } as Agenda;
 
       const updatedAgenda: Agenda = {
-          ...availableAgenda,
-          isAvailable: false,
+        ...availableAgenda,
+        isAvailable: false,
       };
 
       dataServicesMock.agendas.getByDoctorId.mockResolvedValue([availableAgenda]);
@@ -120,11 +118,11 @@ describe('AgendaUseCase', () => {
 
       expect(result).toEqual(updatedAgenda);
       expect(dataServicesMock.agendas.update).toHaveBeenCalledWith(
-          availableAgenda.id.toString(),
-          {
-              ...availableAgenda,
-              isAvailable: false,
-          }
+        availableAgenda.id.toString(),
+        {
+          ...availableAgenda,
+          isAvailable: false,
+        }
       );
     });
   });
@@ -154,7 +152,6 @@ describe('AgendaUseCase', () => {
     it('should update and return the updated agenda', async () => {
       const agendaId = 1;
       const agendaDTO: CreateAgendaDTO = {
-        doctorId: 1,
         date: new Date(),
         isAvailable: false,
       };
@@ -166,19 +163,23 @@ describe('AgendaUseCase', () => {
         isAvailable: true,
       };
 
+      const updatedAgenda: Agenda = {
+        ...foundAgenda,
+        ...agendaDTO,
+      };
+
       dataServicesMock.agendas.get.mockResolvedValue(foundAgenda);
-      dataServicesMock.agendas.update.mockResolvedValue(foundAgenda);
+      dataServicesMock.agendas.update.mockResolvedValue(updatedAgenda);
 
       const result = await agendaUseCase.updateAgenda(agendaDTO, agendaId);
 
-      expect(result).toEqual(foundAgenda);
-      expect(dataServicesMock.agendas.update).toHaveBeenCalledWith(agendaId.toString(), foundAgenda);
+      expect(result).toEqual(updatedAgenda);
+      expect(dataServicesMock.agendas.update).toHaveBeenCalledWith(agendaId.toString(), updatedAgenda);
     });
 
     it('should throw a NotFoundException if the agenda is not found', async () => {
       const agendaId = 999;
       const agendaDTO: CreateAgendaDTO = {
-        doctorId: 1,
         date: new Date(),
         isAvailable: false,
       };
@@ -192,6 +193,8 @@ describe('AgendaUseCase', () => {
   describe('deleteAgenda', () => {
     it('should delete the agenda with the given ID', async () => {
       const agendaId = 1;
+
+      dataServicesMock.agendas.delete.mockResolvedValue(null);
 
       await agendaUseCase.deleteAgenda(agendaId);
 

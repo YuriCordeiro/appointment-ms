@@ -7,15 +7,19 @@ import { IMedPort, IMedPortToken } from "src/adapter/driven/transport/ports/med.
 import { DoctorResponseDTO } from "src/adapter/driver/dtos/doctor-response.dto";
 import { EmailService } from "src/adapter/driven/email/email.service";
 import { MurLock } from "murlock";
+import { IAppointmentUseCase } from "./appointment.use-case.interface";
+import { IAgendaUseCase } from "../agendas/agenda.use-case .interface";
+import { In } from "typeorm";
 
 @Injectable()
-export class AppointmentUseCase {
+export class AppointmentUseCase implements IAppointmentUseCase {
 
     private readonly logger = new Logger(AppointmentUseCase.name);
 
     constructor(
         private dataServices: IDataServices,
-        private agendaUseCase: AgendaUseCase,
+        @Inject('IAgendaUseCase')
+        private agendaUseCase: IAgendaUseCase,
         private emailService: EmailService,
         @Inject(IMedPortToken) private doctorMicrosserviceClient: IMedPort
     ) { }
@@ -157,7 +161,7 @@ export class AppointmentUseCase {
 
         }
 
-        throw new NotFoundException(`No appointment with id: ${appointmentId} were found.`);
+        throw new NotFoundException(`No appointment with ID: ${appointmentId} were found.`);
     }
 
     async getAppointmentById(appointmentId: number) {

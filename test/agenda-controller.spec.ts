@@ -1,13 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AgendaController } from 'src/adapter/driver/controllers/agenda/agenda.controller';
-import { AgendaUseCase } from 'src/core/application/use-cases/agendas/agenda.use-case';
 import { CreateAgendaDTO } from 'src/adapter/driver/dtos/create-agenda.dto';
 import { JwtAuthGuard } from 'src/adapter/driver/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/adapter/driver/auth/roles-guard';
 import { NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Roles } from 'src/adapter/driver/auth/decorator-roles';
 import { Agenda } from 'src/core/domain/entities/agenda.model';
+import { JWTUtil } from 'src/adapter/driver/auth/jtw-util';
 
 const mockAgendaUseCase = () => ({
   createAgenda: jest.fn(),
@@ -18,15 +17,21 @@ const mockAgendaUseCase = () => ({
   deleteAgenda: jest.fn(),
 });
 
+const mockJwtUtil = () => ({
+  decode: jest.fn(),
+});
+
 describe('AgendaController', () => {
   let agendaController: AgendaController;
   let agendaUseCaseMock: ReturnType<typeof mockAgendaUseCase>;
+  let jwtUtilMock: ReturnType<typeof mockJwtUtil>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AgendaController],
       providers: [
-        { provide: AgendaUseCase, useFactory: mockAgendaUseCase },
+        { provide: 'IAgendaUseCase', useFactory: mockAgendaUseCase },
+        { provide: JWTUtil, useFactory: mockJwtUtil },
         JwtAuthGuard,
         RolesGuard,
         Reflector,
@@ -34,7 +39,8 @@ describe('AgendaController', () => {
     }).compile();
 
     agendaController = module.get<AgendaController>(AgendaController);
-    agendaUseCaseMock = module.get(AgendaUseCase);
+    agendaUseCaseMock = module.get('IAgendaUseCase');
+    jwtUtilMock = module.get(JWTUtil);
   });
 
   it('should be defined', () => {
@@ -44,7 +50,6 @@ describe('AgendaController', () => {
   describe('createNewAgenda', () => {
     it('should create a new agenda and return it', async () => {
       const createAgendaDTO: CreateAgendaDTO = {
-        doctorId: 1,
         date: new Date(),
         isAvailable: true,
       };
@@ -58,10 +63,16 @@ describe('AgendaController', () => {
 
       agendaUseCaseMock.createAgenda.mockResolvedValue(createdAgenda);
 
-      const result = await agendaController.createNewAgenda(createAgendaDTO);
+      jwtUtilMock.decode.mockReturnValue({ sub: 1 });
+
+      const result = await agendaController.createNewAgenda(
+        { headers: { authorization: 'Bearer token' } } as any,
+        createAgendaDTO
+      );
 
       expect(result).toEqual(createdAgenda);
-      expect(agendaUseCaseMock.createAgenda).toHaveBeenCalledWith(createAgendaDTO);
+      expect(agendaUseCaseMock.createAgenda).toHaveBeenCalledWith(createAgendaDTO, 1);
+      expect(jwtUtilMock.decode).toHaveBeenCalledWith('Bearer token');
     });
   });
 
@@ -101,7 +112,6 @@ describe('AgendaController', () => {
     it('should update an agenda and return the updated agenda', async () => {
       const agendaId = 1;
       const updateAgendaDTO: CreateAgendaDTO = {
-        doctorId: 1,
         date: new Date(),
         isAvailable: false,
       };
